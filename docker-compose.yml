@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: expensetracker
+      POSTGRES_USER: expensetracker
+      POSTGRES_PASSWORD: expensetracker
+    ports:
+      # Host-side 5433: this machine already runs a native Postgres on 5432.
+      - "5433:5432"
+    volumes:
+      # 18+ images manage a version-specific subdirectory themselves; mount the
+      # parent, not /var/lib/postgresql/data (see docker-library/postgres#1259).
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expensetracker -d expensetracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:

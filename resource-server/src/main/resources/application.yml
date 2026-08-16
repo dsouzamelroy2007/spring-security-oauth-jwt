@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: resource-server
+
+server:
+  # 8081 is taken by a pre-existing local adminer container on this machine.
+  port: 8082

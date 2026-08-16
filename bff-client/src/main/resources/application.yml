@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: bff-client
+
+server:
+  port: 8080
