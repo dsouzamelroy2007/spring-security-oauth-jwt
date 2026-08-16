@@ -2,5 +2,34 @@ spring:
   application:
     name: authorization-server
 
+  datasource:
+    # Host port 5433, not 5432: this dev machine already runs a native Postgres
+    # service on 5432. See docker-compose.yml.
+    url: jdbc:postgresql://localhost:5433/expensetracker
+    username: expensetracker
+    password: expensetracker
+
+  jpa:
+    hibernate:
+      # Flyway is the single source of schema truth. "update" or "create" here
+      # would let Hibernate silently alter the schema out from under Flyway's
+      # migration history, masking real migration bugs instead of failing loudly.
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    # Default location (classpath:db/migration) and Postgres dialect (via the
+    # flyway-database-postgresql runtime dependency) both apply; nothing to override.
+    enabled: true
+
 server:
   port: 9000
+
+app:
+  security:
+    # RSA signing key rotation interval (ISO-8601 duration). See
+    # config/jwk/JwkSourceConfig — a new key becomes the signer, the previous
+    # one is retained just long enough for already-issued tokens to still verify.
+    jwk-rotation-interval: P7D
+  oauth2:
+    issuer: http://localhost:9000

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Expense Tracker - Authorize access</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f4f5f7; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; }
+        .card { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.1); width: 28rem; }
+        h1 { font-size: 1.25rem; margin: 0 0 1rem; }
+        .scope { padding: .5rem 0; border-top: 1px solid #eee; }
+        .scope label { font-weight: 600; }
+        .scope p { margin: .25rem 0 0; color: #555; font-size: .85rem; }
+        button { padding: .6rem 1.2rem; border-radius: 4px; border: none; cursor: pointer; margin-top: 1.25rem; }
+        .approve { background: #2563eb; color: #fff; margin-right: .5rem; }
+        .cancel { background: none; color: #555; }
+    </style>
+    <script>
+        function cancelConsent() {
+            document.consent_form.reset();
+            document.consent_form.submit();
+        }
+    </script>
+</head>
+<body>
+<div class="card">
+    <h1>Authorize access</h1>
+    <p><span th:text="${clientId}"></span> wants to access the account of
+        <strong th:text="${principalName}"></strong>.</p>
+
+    <form name="consent_form" method="post" th:action="${requestURI}">
+        <input type="hidden" name="client_id" th:value="${clientId}"/>
+        <input type="hidden" name="state" th:value="${state}"/>
+
+        <div th:each="scope : ${scopes}" class="scope">
+            <input type="checkbox" name="scope" th:value="${scope.scope}" th:id="${scope.scope}" checked/>
+            <label th:for="${scope.scope}" th:text="${scope.scope}"></label>
+            <p th:text="${scope.description}"></p>
+        </div>
+
+        <p th:if="${not #lists.isEmpty(previouslyApprovedScopes)}">Already granted:</p>
+        <div th:each="scope : ${previouslyApprovedScopes}" class="scope">
+            <input type="checkbox" disabled checked/>
+            <label th:text="${scope.scope}"></label>
+            <p th:text="${scope.description}"></p>
+        </div>
+
+        <button class="approve" type="submit">Authorize</button>
+        <button class="cancel" type="button" onclick="cancelConsent();">Cancel</button>
+    </form>
+</div>
+</body>
+</html>
