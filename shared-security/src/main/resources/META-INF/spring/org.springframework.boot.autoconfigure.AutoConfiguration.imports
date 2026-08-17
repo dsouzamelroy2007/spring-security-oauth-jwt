@@ -1,0 +1,3 @@
+com.mel.expensetracker.shared.jwt.JwtAuthenticationConverterAutoConfiguration
+com.mel.expensetracker.shared.error.SecurityProblemDetailsAutoConfiguration
+com.mel.expensetracker.shared.org.OrgContextAutoConfiguration

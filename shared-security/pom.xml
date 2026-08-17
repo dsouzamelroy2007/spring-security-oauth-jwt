@@ -17,9 +17,35 @@
   <description>Reusable auto-configuration: RFC 9457 errors, JWT converters, audit, org resolution. Library only, no Boot repackaging.</description>
 
   <dependencies>
+    <!-- Library, not an application: every servlet/security dependency is
+         optional and consumed behind @ConditionalOnClass, so an application
+         module that doesn't need JWT resource-server support (e.g. a future
+         module using only the RFC 9457 handlers) isn't forced to pull it in. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+      <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- spring-security-test alone no longer makes @WithMockUser work; this
+         starter is required alongside it (same pattern as authorization-server). -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-test</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
