@@ -17,6 +17,12 @@
   <description>OIDC Provider: issuer metadata, JWKS, form login, consent. The only module that authenticates humans.</description>
 
   <dependencies>
+    <!-- [FEATURE D8] AuditEventWriter, wired into FormLoginSuccessHandler /
+         FormLoginFailureHandler below. -->
+    <dependency>
+      <groupId>com.mel.expensetracker</groupId>
+      <artifactId>shared-security</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webmvc</artifactId>

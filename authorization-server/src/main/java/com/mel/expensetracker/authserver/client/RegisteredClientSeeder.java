@@ -55,6 +55,10 @@ public class RegisteredClientSeeder implements ApplicationRunner {
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri("http://127.0.0.1:8080/login/oauth2/code/bff-client")
+                // [FEATURE B4] RP-initiated logout: Spring Authorization Server only
+                // redirects back to a post-logout URI that's registered here -- an
+                // unregistered one is silently ignored, not an error.
+                .postLogoutRedirectUri("http://127.0.0.1:8080/")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .scope("expenses.read")
