@@ -28,6 +28,7 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 @Configuration
 public class BffSecurityConfig {
 
+    // [FEATURE D5] Ordered chain 4 of 4 in bff-client -- see class comment.
     @Bean
     @Order(3)
     SecurityFilterChain bffSecurityFilterChain(

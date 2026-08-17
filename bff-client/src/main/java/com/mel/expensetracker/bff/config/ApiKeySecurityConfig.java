@@ -22,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class ApiKeySecurityConfig {
 
+    // [FEATURE D5] Ordered chain 3 of 4 in bff-client -- see class comment.
     @Bean
     @Order(2)
     SecurityFilterChain apiKeySecurityFilterChain(

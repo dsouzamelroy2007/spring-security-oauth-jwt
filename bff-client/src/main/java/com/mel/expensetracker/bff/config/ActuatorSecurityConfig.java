@@ -58,6 +58,7 @@ public class ActuatorSecurityConfig {
                 .build());
     }
 
+    // [FEATURE D5] Ordered chain 1 of 4 in bff-client -- see class comment.
     @Bean
     @Order(0)
     SecurityFilterChain actuatorSecurityFilterChain(

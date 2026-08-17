@@ -1,0 +1,15 @@
+meta {
+  name: Export reports (scope-gated M2M)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{resourceServer}}/api/v1/reports/export
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{m2mToken}}
+}

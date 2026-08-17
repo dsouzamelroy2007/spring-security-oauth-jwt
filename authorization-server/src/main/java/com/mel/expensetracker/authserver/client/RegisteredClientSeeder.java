@@ -78,6 +78,8 @@ public class RegisteredClientSeeder implements ApplicationRunner {
                 .build();
     }
 
+    // [FEATURE B2] client_credentials grant for the export endpoint -- no PKCE, no
+    // consent screen: there's no end user and no browser in this flow.
     private RegisteredClient exportWorker() {
         return RegisteredClient.withId(UUID.nameUUIDFromBytes("export-worker".getBytes()).toString())
                 .clientId("export-worker")

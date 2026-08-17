@@ -41,6 +41,8 @@ public class SecurityConfig {
         this.reportRepository = reportRepository;
     }
 
+    // [FEATURE D5] Stateless JWT-only API needs exactly one chain, no @Order --
+    // the contrast case in the cross-module chain-ordering diagram (docs/flows).
     @Bean
     SecurityFilterChain resourceServerSecurityFilterChain(HttpSecurity http) throws Exception {
         var ownershipRequired = new ReportAccessAuthorizationManager(reportRepository, true);
@@ -67,7 +69,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/whoami").authenticated()
-                        // Must precede /reports/{id}: see class comment.
+                        // [FEATURE B2] Must precede /reports/{id}: see class comment.
                         .requestMatchers(HttpMethod.GET, "/api/v1/reports/export").hasAuthority("SCOPE_expenses.export")
                         .requestMatchers(HttpMethod.GET, "/api/v1/reports/{id}").access(ownershipRequired)
                         .requestMatchers(HttpMethod.PUT, "/api/v1/reports/{id}").access(ownershipRequired)

@@ -1,0 +1,15 @@
+meta {
+  name: Approve report (role-gated, ROLE_MANAGER)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{resourceServer}}/api/v1/reports/e3333333-3333-3333-3333-333333333333/approve
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}

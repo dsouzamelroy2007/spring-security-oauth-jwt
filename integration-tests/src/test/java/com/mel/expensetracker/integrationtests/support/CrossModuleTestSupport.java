@@ -41,6 +41,26 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * *lowest*-precedence property source, so it would still lose to whichever
  * {@code application.yml} wins the classpath race. Command-line arguments
  * outrank {@code application.yml} instead.
+ *
+ * <p>The same combined classpath also pulls in {@code bff-client}'s
+ * transitive {@code spring-session-data-redis} jar (declared as a test-scope
+ * dependency in this module's pom even though {@code bff-client}'s own
+ * application is never booted here). Spring Boot's session autoconfiguration
+ * is driven purely by what's on the classpath, so without an explicit
+ * override both other contexts silently pick up a Redis-backed
+ * {@code HttpSession} too -- neither authorization-server nor resource-server
+ * is meant to have one; only {@code bff-client} owns that design. Excluding
+ * {@code SessionDataRedisAutoConfiguration} below restores each context to
+ * the behavior its own module intends (authorization-server: plain servlet
+ * container session for the login/consent flow; resource-server: none at
+ * all, already stateless). {@code spring.session.store-type=none} -- the
+ * Boot 2/3-era opt-out -- does not work here: decompiling the actual 4.1.0
+ * jar shows the redis session configuration is gated only by
+ * {@code @ConditionalOnBean(RedisConnectionFactory.class)} and
+ * {@code @ConditionalOnMissingBean(SessionRepository.class)}, with no
+ * {@code @ConditionalOnProperty} on {@code store-type} at all in this Boot
+ * version -- that property is now only a tie-breaker between multiple
+ * candidate stores, not a hard disable.
  */
 public abstract class CrossModuleTestSupport {
 
@@ -62,7 +82,9 @@ public abstract class CrossModuleTestSupport {
                         "--spring.datasource.url=" + postgres.getJdbcUrl(),
                         "--spring.datasource.username=" + postgres.getUsername(),
                         "--spring.datasource.password=" + postgres.getPassword(),
-                        "--spring.flyway.locations=classpath:db/migration/authserver");
+                        "--spring.flyway.locations=classpath:db/migration/authserver",
+                        "--spring.autoconfigure.exclude="
+                                + "org.springframework.boot.session.data.redis.autoconfigure.SessionDataRedisAutoConfiguration");
 
         resourceServerContext = new SpringApplicationBuilder(ResourceServerApplication.class)
                 .run(
@@ -78,7 +100,9 @@ public abstract class CrossModuleTestSupport {
                         "--spring.jpa.open-in-view=false",
                         "--spring.mvc.problemdetails.enabled=true",
                         "--spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:9000",
-                        "--app.security.expected-audience=expense-tracker-api");
+                        "--app.security.expected-audience=expense-tracker-api",
+                        "--spring.autoconfigure.exclude="
+                                + "org.springframework.boot.session.data.redis.autoconfigure.SessionDataRedisAutoConfiguration");
     }
 
     @AfterAll

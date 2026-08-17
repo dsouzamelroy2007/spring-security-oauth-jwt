@@ -39,6 +39,7 @@ public class FormLoginSecurityConfig {
                 .build());
     }
 
+    // [FEATURE D5] Ordered chain 2 of 2 -- see class comment for why two, not one.
     @Bean
     @Order(2)
     public SecurityFilterChain formLoginSecurityFilterChain(

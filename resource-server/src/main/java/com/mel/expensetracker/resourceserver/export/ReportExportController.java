@@ -22,6 +22,7 @@ public class ReportExportController {
         this.reportRepository = reportRepository;
     }
 
+    // [FEATURE B2] client_credentials-issued token, scope-gated -- no user, no org claim.
     @GetMapping("/api/v1/reports/export")
     @PreAuthorize("hasAuthority('SCOPE_expenses.export')")
     public List<ExpenseReportSummary> exportReports(Pageable pageable) {

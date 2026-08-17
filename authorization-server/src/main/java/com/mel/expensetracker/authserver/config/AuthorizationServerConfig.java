@@ -56,8 +56,16 @@ public class AuthorizationServerConfig {
         // Security's own types. AppUserPrincipal is persisted as the stored
         // Authentication's principal, so without this it fails to deserialize
         // with "denied resolution" the moment consent/authorization rows are read back.
-        BasicPolymorphicTypeValidator.Builder typeValidator =
-                BasicPolymorphicTypeValidator.builder().allowIfSubType(AppUserPrincipal.class);
+        // java.util.* is allowed too: OrgRoleClaimsTokenCustomizer stores the
+        // access token's "aud" claim as List.of(...), whose runtime type is a
+        // JDK-internal java.util.ImmutableCollections$List12 -- reading a row
+        // back a second time (revocation lookup, authorization-code reuse
+        // detection) deserializes that stored claim map and fails the same
+        // way without an allowance for it. Scoped to the java.util package,
+        // not a blanket allowance, to keep the gadget-attack surface JDK-only.
+        BasicPolymorphicTypeValidator.Builder typeValidator = BasicPolymorphicTypeValidator.builder()
+                .allowIfSubType(AppUserPrincipal.class)
+                .allowIfSubType("java.util.");
         JsonMapper jsonMapper = JsonMapper.builder()
                 .addModules(SecurityJacksonModules.getModules(getClass().getClassLoader(), typeValidator))
                 .build();
@@ -85,6 +93,7 @@ public class AuthorizationServerConfig {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
     }
 
+    // [FEATURE D5] Ordered chain 1 of 2 -- see class comment for why two, not one.
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {

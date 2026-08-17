@@ -49,6 +49,7 @@ public class BasicAuthSecurityConfig {
                 .build());
     }
 
+    // [FEATURE D5] Ordered chain 2 of 4 in bff-client -- see class comment.
     @Bean
     @Order(1)
     SecurityFilterChain basicAuthSecurityFilterChain(

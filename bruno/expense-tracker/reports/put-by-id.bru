@@ -1,0 +1,27 @@
+meta {
+  name: Update report (owner-only)
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{resourceServer}}/api/v1/reports/e2222222-2222-2222-2222-222222222222
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+headers {
+  If-Match: "0"
+}
+
+body:json {
+  {
+    "title": "Q1 client travel (updated)",
+    "description": "Site visits to two clients, revised itinerary",
+    "currency": "USD"
+  }
+}

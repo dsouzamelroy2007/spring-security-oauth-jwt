@@ -25,6 +25,7 @@
     <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.5.6</maven-failsafe-plugin.version>
     <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+    <dependency-check-maven.version>13.0.0</dependency-check-maven.version>
   </properties>
 
   <modules>
@@ -168,6 +169,24 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <!-- Not bound to any lifecycle phase, so "mvn verify" never runs this.
+           CI invokes it explicitly (mvn org.owasp:dependency-check-maven:aggregate)
+           as its own step. No nvdApiKey configured: the plugin works fine
+           without one, just at a slower default NVD rate limit; never a
+           required secret (see CLAUDE.md rule 7). See
+           dependency-check-suppression.xml for any justified false-positive
+           suppressions. -->
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>${dependency-check-maven.version}</version>
+        <configuration>
+          <failBuildOnCVSS>9</failBuildOnCVSS>
+          <suppressionFiles>
+            <suppressionFile>dependency-check-suppression.xml</suppressionFile>
+          </suppressionFiles>
+        </configuration>
       </plugin>
     </plugins>
   </build>

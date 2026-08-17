@@ -1,0 +1,15 @@
+meta {
+  name: Delete report (meta-annotation, @IsOrgAdmin)
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{resourceServer}}/api/v1/reports/e1111111-1111-1111-1111-111111111111
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}

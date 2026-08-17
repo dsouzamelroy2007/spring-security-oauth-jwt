@@ -1,0 +1,114 @@
+### Expense Tracker -- demo.http
+### Works with the VS Code "REST Client" extension or IntelliJ's built-in
+### HTTP Client. Run `make up` first -- every request below hits the real,
+### locally-running stack (authorization-server :9000, resource-server :8082,
+### bff-client :8080). Covers SPEC.md's endpoint -> authorization-style map.
+###
+### The interactive login (username/password + consent) can't be scripted as
+### a plain HTTP request -- it's a multi-step browser dance. Either open
+### http://localhost:8080/ in a browser and log in as one of the seeded users
+### below, or run the automated version:
+### `mvn -q -pl integration-tests -am verify` (see CodeGrantEndToEndIT).
+###
+### Seeded users: alice/alice-demo-pw (acme, EMPLOYEE), bob/bob-demo-pw (acme,
+### MANAGER), carol/carol-demo-pw (globex, FINANCE), dana/dana-demo-pw
+### (globex, ORG_ADMIN).
+
+@authServer = http://localhost:9000
+@resourceServer = http://localhost:8082
+@bffClient = http://localhost:8080
+
+### [style: public] Categories -- no token needed.
+GET {{resourceServer}}/api/v1/categories
+
+### --- M2M: client_credentials, no browser, no cookies ------------------
+
+### Get a token for export-worker (scope: expenses.export).
+# @name clientCredentialsToken
+POST {{authServer}}/oauth2/token
+Authorization: Basic ZXhwb3J0LXdvcmtlcjpleHBvcnQtd29ya2VyLXNlY3JldA==
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&scope=expenses.export
+
+### [style: scope-gated M2M] Export -- not org-scoped by design (an export
+### job runs across every tenant). Paste the access_token from the response
+### above into @m2mToken.
+@m2mToken = paste-access-token-here
+
+GET {{resourceServer}}/api/v1/reports/export
+Authorization: Bearer {{m2mToken}}
+
+### --- Everything below needs a real user's access token -----------------
+### Log in at http://localhost:8080/ (any seeded user), open DevTools ->
+### Application -> Cookies, and paste the SESSION cookie value below to call
+### bff-client's own SPA-facing endpoints with the same session a real
+### browser would use. Or, if you have a user access token from
+### CodeGrantEndToEndIT / your own manual authorization_code run, use
+### @userToken directly against resource-server instead.
+
+@sessionCookie = paste-SESSION-cookie-value-here
+@userToken = paste-user-access-token-here
+
+### [style: authenticated, any role] whoami via the BFF (session cookie, no
+### token visible to the browser at all -- this is the point of [FEATURE B1]).
+GET {{bffClient}}/whoami
+Cookie: SESSION={{sessionCookie}}
+
+### [style: authenticated, any role] whoami directly against resource-server
+### (bearer token -- what the BFF is doing on your behalf above).
+GET {{resourceServer}}/api/v1/whoami
+Authorization: Bearer {{userToken}}
+
+### [style: collection filtering] List reports -- @PostFilter drops drafts
+### that aren't the caller's own (log in as bob to see this: alice's DRAFT
+### "Conference trip planning" never appears in bob's list).
+GET {{resourceServer}}/api/v1/reports
+Authorization: Bearer {{userToken}}
+
+### [style: owner-only] Get one of alice's own reports (log in as alice).
+GET {{resourceServer}}/api/v1/reports/e2222222-2222-2222-2222-222222222222
+Authorization: Bearer {{userToken}}
+
+### [style: owner-only] Update it (log in as alice -- anyone else gets 403).
+PUT {{resourceServer}}/api/v1/reports/e2222222-2222-2222-2222-222222222222
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+If-Match: "0"
+
+{
+  "title": "Q1 client travel (updated)",
+  "description": "Site visits to two clients, revised itinerary",
+  "currency": "USD"
+}
+
+### [style: role-gated] Approve a report -- ROLE_MANAGER only (log in as bob).
+POST {{resourceServer}}/api/v1/reports/e3333333-3333-3333-3333-333333333333/approve
+Authorization: Bearer {{userToken}}
+
+### [style: field redaction] Reimbursements -- IBAN masked unless
+### ROLE_FINANCE (log in as carol to see the real IBAN; anyone else sees it
+### masked).
+GET {{resourceServer}}/api/v1/reimbursements
+Authorization: Bearer {{userToken}}
+
+### [style: meta-annotation, @IsOrgAdmin] Delete a report -- ORG_ADMIN only
+### (log in as dana; alice's DRAFT below is in a *different* org, so this
+### also proves tenant scoping -- expect 403, not 404).
+DELETE {{resourceServer}}/api/v1/reports/e1111111-1111-1111-1111-111111111111
+Authorization: Bearer {{userToken}}
+
+### --- Negative paths (see integration-tests/.../CodeGrantEndToEndIT for
+### the automated, assertion-backed versions of these) --------------------
+
+### Cross-org access -> 403 with an RFC 9457 body (dana is globex, this
+### report is acme's).
+GET {{resourceServer}}/api/v1/reports/e2222222-2222-2222-2222-222222222222
+Authorization: Bearer {{userToken}}
+
+### Absent CSRF token on a state-changing bff-client request -> 403.
+POST {{bffClient}}/api/reports
+Cookie: SESSION={{sessionCookie}}
+Content-Type: application/json
+
+{"title": "Should be rejected -- no X-XSRF-TOKEN header"}

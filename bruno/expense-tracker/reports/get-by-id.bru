@@ -1,0 +1,15 @@
+meta {
+  name: Get report by id (owner-only)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{resourceServer}}/api/v1/reports/e2222222-2222-2222-2222-222222222222
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
