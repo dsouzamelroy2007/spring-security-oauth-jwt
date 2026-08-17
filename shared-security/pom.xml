@@ -36,6 +36,14 @@
       <artifactId>spring-boot-autoconfigure</artifactId>
       <optional>true</optional>
     </dependency>
+    <!-- [FEATURE D8] Backs AuditEventWriter. Optional: a module with no
+         database connection of its own never pulls this in, and never gets
+         an AuditEventWriter bean (see AuditAutoConfiguration). -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+      <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>

@@ -1,5 +1,7 @@
 package com.mel.expensetracker.shared.error;
 
+import com.mel.expensetracker.shared.audit.AuditEventWriter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -25,14 +27,18 @@ public class SecurityProblemDetailsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     ProblemDetailAuthenticationEntryPoint problemDetailAuthenticationEntryPoint(
-            HttpMessageConverter<Object> problemDetailHttpMessageConverter) {
-        return new ProblemDetailAuthenticationEntryPoint(problemDetailHttpMessageConverter);
+            HttpMessageConverter<Object> problemDetailHttpMessageConverter,
+            ObjectProvider<AuditEventWriter> auditEventWriter) {
+        return new ProblemDetailAuthenticationEntryPoint(
+                problemDetailHttpMessageConverter, auditEventWriter.getIfAvailable());
     }
 
     @Bean
     @ConditionalOnMissingBean
     ProblemDetailAccessDeniedHandler problemDetailAccessDeniedHandler(
-            HttpMessageConverter<Object> problemDetailHttpMessageConverter) {
-        return new ProblemDetailAccessDeniedHandler(problemDetailHttpMessageConverter);
+            HttpMessageConverter<Object> problemDetailHttpMessageConverter,
+            ObjectProvider<AuditEventWriter> auditEventWriter) {
+        return new ProblemDetailAccessDeniedHandler(
+                problemDetailHttpMessageConverter, auditEventWriter.getIfAvailable());
     }
 }

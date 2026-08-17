@@ -1,8 +1,12 @@
 package com.mel.expensetracker.shared.error;
 
+import com.mel.expensetracker.shared.audit.AuditEvent;
+import com.mel.expensetracker.shared.audit.AuditEventWriter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -20,10 +24,23 @@ import org.springframework.security.web.AuthenticationEntryPoint;
  */
 public class ProblemDetailAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private static final Logger log = LoggerFactory.getLogger(ProblemDetailAuthenticationEntryPoint.class);
+
     private final HttpMessageConverter<Object> problemDetailConverter;
+    private final AuditEventWriter auditEventWriter;
 
     public ProblemDetailAuthenticationEntryPoint(HttpMessageConverter<Object> problemDetailConverter) {
+        this(problemDetailConverter, null);
+    }
+
+    /**
+     * [FEATURE D8] {@code auditEventWriter} is nullable -- see the sibling
+     * access-denied handler's constructor for why.
+     */
+    public ProblemDetailAuthenticationEntryPoint(
+            HttpMessageConverter<Object> problemDetailConverter, AuditEventWriter auditEventWriter) {
         this.problemDetailConverter = problemDetailConverter;
+        this.auditEventWriter = auditEventWriter;
     }
 
     @Override
@@ -37,5 +54,16 @@ public class ProblemDetailAuthenticationEntryPoint implements AuthenticationEntr
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         problemDetailConverter.write(
                 problem, MediaType.APPLICATION_PROBLEM_JSON, new ServletServerHttpResponse(response));
+
+        if (auditEventWriter != null) {
+            // [FEATURE D8] Never let an audit-write failure turn an already
+            // -written 401 response into a 500 -- the response above is
+            // already committed to the wire by this point.
+            try {
+                auditEventWriter.write(new AuditEvent("authentication_required", null, null, request.getRemoteAddr(), null));
+            } catch (RuntimeException e) {
+                log.warn("Failed to write authentication_required audit row", e);
+            }
+        }
     }
 }
