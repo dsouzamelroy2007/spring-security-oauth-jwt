@@ -18,9 +18,14 @@ spring:
     open-in-view: false
 
   flyway:
-    # Default location (classpath:db/migration) and Postgres dialect (via the
-    # flyway-database-postgresql runtime dependency) both apply; nothing to override.
     enabled: true
+    # Namespaced, not the default classpath:db/migration: integration-tests
+    # boots this app and resource-server in one JVM, both jars on one
+    # classpath -- with the default location, Flyway's classpath scan finds
+    # both modules' "V1" and refuses to start ("Found more than one migration
+    # with version 1"). Postgres dialect comes from the flyway-database-postgresql
+    # runtime dependency.
+    locations: classpath:db/migration/authserver
 
 server:
   port: 9000
@@ -33,3 +38,8 @@ app:
     jwk-rotation-interval: P7D
   oauth2:
     issuer: http://localhost:9000
+    # Audience for access tokens meant to be presented to the Expense Tracker
+    # API. Not id_tokens -- those are consumed by the client itself, which
+    # authenticates via client_id, not an audience claim. Must match
+    # resource-server's app.security.expected-audience.
+    resource-audience: expense-tracker-api
