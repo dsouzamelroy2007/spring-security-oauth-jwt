@@ -2,6 +2,65 @@ spring:
   application:
     name: resource-server
 
+  datasource:
+    # Host port 5433, not 5432: this dev machine already runs a native Postgres
+    # service on 5432. See docker-compose.yml.
+    url: jdbc:postgresql://localhost:5433/expensetracker
+    username: expensetracker
+    password: expensetracker
+
+  jpa:
+    properties:
+      hibernate:
+        # Own Postgres schema, not the default "public" -- see spring.flyway.schemas.
+        default_schema: resource_server
+    hibernate:
+      # Flyway is the single source of schema truth. "update"/"create" here
+      # would let Hibernate silently alter the schema out from under Flyway's
+      # migration history, masking real migration bugs instead of failing loudly.
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    # authorization-server uses the same Postgres database (one docker-compose
+    # instance, per-service schema, not per-service database). Without its own
+    # schema, resource-server's Flyway history would collide with
+    # authorization-server's: same flyway_schema_history table, unrelated
+    # migrations numbered from V1, version-vs-checksum conflicts on every run.
+    schemas: resource_server
+    default-schema: resource_server
+    # Namespaced, not the default classpath:db/migration -- integration-tests
+    # boots this app and authorization-server in one JVM, both jars on one
+    # classpath, and the default location collides with authorization-server's
+    # own "V1" for the same reason the schema above does (see its own comment).
+    locations: classpath:db/migration/resourceserver
+
+  mvc:
+    problemdetails:
+      # Bean Validation failures, 404s from unmapped paths, etc. get an RFC
+      # 9457 body from Spring MVC's own DefaultHandlerExceptionResolver --
+      # ApiExceptionHandler only needs to cover this API's own domain
+      # exceptions (not-found report, version conflict), not reinvent this.
+      enabled: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Discovery-based: resolves JWKS from authorization-server's OIDC
+          # metadata rather than pinning a static key. Its JWKS rotates every
+          # 7 days (RotatingRsaKeyManager) -- a pinned key would eventually
+          # reject every token.
+          issuer-uri: http://localhost:9000
+
 server:
   # 8081 is taken by a pre-existing local adminer container on this machine.
   port: 8082
+
+app:
+  security:
+    # Must match authorization-server's app.oauth2.resource-audience -- the
+    # `aud` claim JwtDecoderConfig's custom validator checks access tokens
+    # against.
+    expected-audience: expense-tracker-api
