@@ -2,5 +2,59 @@ spring:
   application:
     name: bff-client
 
+  security:
+    oauth2:
+      client:
+        registration:
+          bff-client:
+            client-id: bff-client
+            client-secret: bff-client-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/bff-client"
+            scope: openid,profile,expenses.read,expenses.write
+        provider:
+          bff-client:
+            issuer-uri: http://localhost:9000
+
+  # [FEATURE D4] SpringSessionBackedSessionRegistry (concurrent session control)
+  # only works against RedisIndexedSessionRepository -- Boot's default
+  # RedisSessionRepository doesn't implement FindByIndexNameSessionRepository.
+  session:
+    data:
+      redis:
+        repository-type: indexed
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # No Flyway here: this module owns no migrations, it only reads/writes
+  # rows in tables other modules' migrations already created (audit_log).
+  datasource:
+    url: jdbc:postgresql://localhost:5433/expensetracker
+    username: expensetracker
+    password: expensetracker
+
 server:
   port: 8080
+
+# [FEATURE D7] A distinct port makes Boot stand up a second embedded
+# connector with its own child ApplicationContext, not just another
+# SecurityFilterChain @Order in the same dispatcher.
+management:
+  server:
+    port: 8090
+
+app:
+  security:
+    # [FEATURE A5] Demo credential, obviously fake, generated for this repo.
+    api-key: demo-bff-internal-api-key
+    # [FEATURE A2] Demo credential, obviously fake, generated for this repo.
+    basic-user: internal-ops
+    basic-password: internal-ops-demo-password
+    # [FEATURE D7] Demo credential, obviously fake, generated for this repo.
+    actuator-user: actuator
+    actuator-password: actuator-demo-password
+  resource-server:
+    base-url: http://localhost:8082

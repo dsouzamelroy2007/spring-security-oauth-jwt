@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Expense Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <h1>Expense Tracker</h1>
+
+  <section id="anonymous-section">
+    <p>Not signed in.</p>
+    <a href="/oauth2/authorization/bff-client">Log in</a>
+  </section>
+
+  <section id="authenticated-section" hidden>
+    <p>Signed in as <strong id="whoami-subject"></strong> (<span id="whoami-org"></span>)</p>
+    <form id="logout-form">
+      <button type="submit">Log out</button>
+    </form>
+
+    <h2>Expense reports</h2>
+    <ul id="report-list"></ul>
+
+    <h3>Submit a report</h3>
+    <form id="create-report-form">
+      <input name="title" placeholder="Title" required />
+      <input name="description" placeholder="Description" />
+      <input name="currency" placeholder="Currency (e.g. EUR)" maxlength="3" required />
+      <button type="submit">Submit</button>
+    </form>
+  </section>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

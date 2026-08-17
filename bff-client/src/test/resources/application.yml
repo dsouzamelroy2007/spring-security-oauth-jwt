@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: bff-client
+
+  security:
+    oauth2:
+      client:
+        registration:
+          bff-client:
+            client-id: bff-client
+            client-secret: bff-client-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/bff-client"
+            scope: openid,profile,expenses.read,expenses.write
+        # No issuer-uri here, deliberately: Boot's OAuth2ClientPropertiesMapper
+        # calls ClientRegistrations.fromIssuerLocation(...) the instant
+        # issuer-uri is non-null, which performs OIDC discovery -- a real HTTP
+        # call -- while the ApplicationContext is still refreshing. bff-client's
+        # own test suite never boots authorization-server (that dual-context
+        # setup is integration-tests' job, M5), so discovery would fail and
+        # take the whole context down with it. Static endpoints matching
+        # Spring Authorization Server's real default paths let the context
+        # boot and the redirect-initiation test (LoginRedirectChainHtmlUnitTest)
+        # still exercise the real authorization-uri-building logic.
+        provider:
+          bff-client:
+            authorization-uri: http://localhost:9000/oauth2/authorize
+            token-uri: http://localhost:9000/oauth2/token
+            jwk-set-uri: http://localhost:9000/oauth2/jwks
+            user-info-uri: http://localhost:9000/userinfo
+            user-name-attribute: sub
+
+  session:
+    data:
+      redis:
+        repository-type: indexed
+
+server:
+  port: 0
+
+# Must differ from server.port's resolved value, or Boot collapses the
+# management context into the SAME FilterChainProxy as the main app's --
+# ActuatorSecurityConfig's any-endpoint chain and BffSecurityConfig's
+# any-request chain then compete for the same "last, unreachable" catch-all
+# and the context fails to start. RANDOM_PORT tests set server.port=0, so
+# this can't also be 0. A fixed test-only port is fine here (unlike
+# server.port, nothing in this test suite depends on it being ephemeral).
+management:
+  server:
+    port: 18099
+
+app:
+  security:
+    api-key: demo-bff-internal-api-key
+    basic-user: internal-ops
+    basic-password: internal-ops-demo-password
+    actuator-user: actuator
+    actuator-password: actuator-demo-password
+  resource-server:
+    base-url: http://localhost:8082
