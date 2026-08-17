@@ -6,7 +6,9 @@ business domain.
 
 *Personal learning project. Not affiliated with or endorsed by any employer.*
 
-**Status:** M1 skeleton — work in progress. No security, no domain model yet.
+**Status:** M3 in progress — authorization-server (OIDC provider) and resource-server
+(Expense Tracker API, full authorization matrix) are functional. bff-client and the
+SPA are still M1 skeleton. Full architecture docs and walkthroughs land in M5.
 
 ## Modules
 
